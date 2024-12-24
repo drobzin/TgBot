@@ -1,0 +1,3 @@
+from handlers.note.find_note_router import find_note_router
+from handlers.note.upd_note_router import upd_note_router
+from handlers.note.add_note_router import add_note_router
