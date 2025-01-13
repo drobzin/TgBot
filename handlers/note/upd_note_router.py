@@ -2,10 +2,8 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery
-from create_bot import bot
 from data_base.dao import delete_note_by_id, update_text_note
-from keyboards.note_kb import main_note_kb, find_note_kb, generate_date_keyboard, generate_type_content_keyboard
-from utils.utils import send_many_notes
+from keyboards.note_kb import main_note_kb
 
 
 upd_note_router = Router()
@@ -43,3 +41,8 @@ async def dell_note_process(call: CallbackQuery, state: FSMContext):
     await delete_note_by_id(note_id=note_id)
     await call.answer(f'Отчет удален!', show_alert=True)
     await call.message.delete()
+
+
+@upd_note_router.message(F.text)
+async def idk(message: Message, state: FSMContext):
+    await message.answer('че несешь?')
