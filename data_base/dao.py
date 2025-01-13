@@ -44,11 +44,11 @@ async def add_note(session, user_id: int, subject_id: int, content_type: str,
 
         session.add(new_note)
         await session.commit()
-        logger.info(f"Заметка для пользователя с ID {
-                    user_id} успешно добавлена!")
+        logger.info(f"Отчет для пользователя с ID {
+                    user_id} успешно добавлен!")
         return new_note
     except SQLAlchemyError as e:
-        logger.error(f"Ошибка при добавлении заметки: {e}")
+        logger.error(f"Ошибка при добавлении отчета: {e}")
         await session.rollback()
 
 
@@ -80,7 +80,7 @@ async def get_note_by_id(session, note_id: int) -> Optional[Dict[str, Any]]:
     try:
         note = await session.get(Note, note_id)
         if not note:
-            logger.info(f"Заметка с ID {note_id} не найдена.")
+            logger.info(f"Отчет с ID {note_id} не найден.")
             return None
 
         return {
@@ -90,7 +90,7 @@ async def get_note_by_id(session, note_id: int) -> Optional[Dict[str, Any]]:
             'file_id': note.file_id
         }
     except SQLAlchemyError as e:
-        logger.error(f"Ошибка при получении заметки: {e}")
+        logger.error(f"Ошибка при получении отчета: {e}")
         return None
 
 
@@ -99,28 +99,27 @@ async def delete_note_by_id(session, note_id: int) -> Optional[Note]:
     try:
         note = await session.get(Note, note_id)
         if not note:
-            logger.error(f"Заметка с ID {note_id} не найдена.")
+            logger.error(f"Отчет с ID {note_id} не найден.")
             return None
 
         await session.delete(note)
         await session.commit()
-        logger.info(f"Заметка с ID {note_id} успешно удалена.")
+        logger.info(f"Отчет с ID {note_id} успешно удален.")
         return note
     except SQLAlchemyError as e:
-        logger.error(f"Ошибка при удалении заметки: {e}")
+        logger.error(f"Ошибка при удалении отчета: {e}")
         await session.rollback()
         return None
 
 
 @connection
 async def get_notes_by_user(session, user_id: int, date_add: str = None, text_search: str = None,
-                            content_type: str = None) -> List[Dict[str, Any]]:
+                            content_type: str = None, subject_id: int = None) -> List[Dict[str, Any]]:
     try:
         result = await session.execute(select(Note).filter_by(user_id=user_id))
         notes = result.scalars().all()
-
         if not notes:
-            logger.info(f"Заметки для пользователя с ID {user_id} не найдены.")
+            logger.info(f"Отчеты для пользователя с ID {user_id} не найдены.")
             return []
 
         note_list = [
@@ -129,7 +128,8 @@ async def get_notes_by_user(session, user_id: int, date_add: str = None, text_se
                 'content_type': note.content_type,
                 'content_text': note.content_text,
                 'file_id': note.file_id,
-                'date_created': note.created_at
+                'date_created': note.created_at,
+                'subject_id': note.subject_id
             } for note in notes
         ]
 
@@ -145,9 +145,13 @@ async def get_notes_by_user(session, user_id: int, date_add: str = None, text_se
             note_list = [
                 note for note in note_list if note['content_type'] == content_type]
 
+        if subject_id:
+            note_list = [
+                note for note in note_list if note['subject_id'] == subject_id]
+
         return note_list
     except SQLAlchemyError as e:
-        logger.error(f"Ошибка при получении заметок: {e}")
+        logger.error(f"Ошибка при получении отчетов: {e}")
         return []
 
 
@@ -170,5 +174,36 @@ async def get_subjects_by_user(session, user_id: int) -> List[Dict[str, Any]]:
         ]
         return subject_list
     except SQLAlchemyError as e:
-        logger.error(f"Ошибка при получении заметок: {e}")
+        logger.error(f"Ошибка при получении отчетов: {e}")
         return []
+
+
+@connection
+async def get_subject_name_by_id(session, subject_id: int) -> List[Dict[str, Any]]:
+    try:
+        subject = await session.get(Subject, subject_id)
+        if not subject:
+            logger.info(f"Предмет с ID {subject_id} не найден.")
+            return None
+
+        return subject.full_name
+    except SQLAlchemyError as e:
+        logger.error(f"Ошибка при получении предмета: {e}")
+        return None
+
+
+@connection
+async def update_text_note(session, note_id: int, content_text: str) -> Optional[Note]:
+    try:
+        note = await session.scalar(select(Note).filter_by(id=note_id))
+        if not note:
+            logger.error(f"Отчет с ID {note_id} не найден.")
+            return None
+
+        note.content_text = content_text
+        await session.commit()
+        logger.info(f"Отчет с ID {note_id} успешно обновлен!")
+        return note
+    except SQLAlchemyError as e:
+        logger.error(f"Ошибка при обновлении отчета: {e}")
+        await session.rollback()

@@ -1,4 +1,4 @@
-""" from aiogram import Router, F
+from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery
@@ -19,9 +19,9 @@ class UPDNoteStates(StatesGroup):
 async def edit_note_text_process(call: CallbackQuery, state: FSMContext):
     await state.clear()
     note_id = int(call.data.replace('edit_note_text_', ''))
-    await call.answer(f'Режим редактирования заметки с ID {note_id}')
+    await call.answer(f'Режим редактирования отчета с ID {note_id}')
     await state.update_data(note_id=note_id)
-    await call.message.answer(f'Отправь новое текстовое содержимоем для заметки с ID {note_id}')
+    await call.message.answer(f'Отправь новое текстовое содержимое для отчета с ID {note_id}')
     await state.set_state(UPDNoteStates.content_text)
 
 
@@ -32,7 +32,7 @@ async def confirm_edit_note_text(message: Message, state: FSMContext):
     content_text = message.text.strip()
     await update_text_note(note_id=note_id, content_text=content_text)
     await state.clear()
-    await message.answer(f'Текст заметки с ID {note_id} успешно изменен на {content_text}!',
+    await message.answer(f'Текст отчета с ID {note_id} успешно изменен на \'{content_text}!\'',
                          reply_markup=main_note_kb())
 
 
@@ -41,6 +41,5 @@ async def dell_note_process(call: CallbackQuery, state: FSMContext):
     await state.clear()
     note_id = int(call.data.replace('dell_note_', ''))
     await delete_note_by_id(note_id=note_id)
-    await call.answer(f'Заметка с ID {note_id} удалена!', show_alert=True)
+    await call.answer(f'Отчет удален!', show_alert=True)
     await call.message.delete()
- """

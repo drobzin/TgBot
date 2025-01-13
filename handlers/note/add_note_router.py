@@ -4,7 +4,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery
 from create_bot import bot
 from data_base.dao import add_note, get_notes_by_user, get_subjects_by_user
-from keyboards.note_kb import main_note_kb, add_note_check, generate_subject_keyboard
+from keyboards.note_kb import main_note_kb, add_note_check, generate_subject_keyboard_withId
 from keyboards.other_kb import stop_fsm
 from utils.utils import get_content_info, send_message_user
 
@@ -25,14 +25,15 @@ async def start_note(message: Message, state: FSMContext):
                          reply_markup=main_note_kb())
 
 
-@add_note_router.message(F.text == '📝 Скинуть отчет')
+@add_note_router.message(F.text == '📝 Отправить отчет')
 async def start_add_note(message: Message, state: FSMContext):
     await state.clear()
     global subject_id
     subject_id = None
     all_subjects = await get_subjects_by_user(user_id=message.from_user.id)
     if all_subjects:
-        await message.answer('По какому предмету отчет?', reply_markup=generate_subject_keyboard(all_subjects))
+        await state.set_state(AddNoteStates.choose_subject)
+        await message.answer('По какому предмету отчет?', reply_markup=generate_subject_keyboard_withId(all_subjects))
 
     else:
         await state.clear()
@@ -42,7 +43,7 @@ async def start_add_note(message: Message, state: FSMContext):
     # await state.set_state(AddNoteStates.choose_subject)
 
 
-@add_note_router.callback_query(F.data.startswith('subject_'))
+@add_note_router.callback_query(AddNoteStates.choose_subject, F.data.startswith('subject_'))
 async def add_subject_to_note(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.clear()
@@ -69,7 +70,7 @@ async def handle_user_note_message(message: Message, state: FSMContext):
         await state.clear()
     else:
         await message.answer(
-            'Это что?'
+            'Прикрепите файл к сообщению'
         )
         await state.set_state(AddNoteStates.content)
 

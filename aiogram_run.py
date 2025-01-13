@@ -4,6 +4,7 @@ from data_base.base import create_tables
 from handlers.note.find_note_router import find_note_router
 from handlers.note.add_subject_router import add_subject_router
 from handlers.note.add_note_router import add_note_router
+from handlers.note.upd_note_router import upd_note_router
 from aiogram.types import BotCommand, BotCommandScopeDefault
 
 from handlers.start_router import start_router
@@ -41,6 +42,7 @@ async def main():
     dp.include_router(add_note_router)
     dp.include_router(find_note_router)
     dp.include_router(add_subject_router)
+    dp.include_router(upd_note_router)
     # регистрация функций
     dp.startup.register(start_bot)
     dp.shutdown.register(stop_bot)

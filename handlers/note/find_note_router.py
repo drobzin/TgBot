@@ -3,55 +3,64 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery
 from create_bot import bot
-from data_base.dao import get_notes_by_user
-from keyboards.note_kb import main_note_kb, find_note_kb, generate_date_keyboard, generate_type_content_keyboard
+from data_base.dao import get_notes_by_user, get_subjects_by_user, get_subject_name_by_id
+from keyboards.note_kb import main_note_kb, find_note_kb, generate_date_keyboard, generate_type_content_keyboard, generate_subject_keyboard_withId, generate_subject_keyboard_withName
 from utils.utils import send_many_notes
+from create_bot import logger
 
 
 find_note_router = Router()
 
 
 class FindNoteStates(StatesGroup):
-    text = State()  # Ожидаем текст для поиска заме
+    text = State()
+    show_notes = State()  # Ожидаем текст для поиска отчета
 
 
 @find_note_router.message(F.text == '📋 Просмотр отчетов')
 async def start_views_noti(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer('Выбери какие заметки отобразить', reply_markup=find_note_kb())
+    await message.answer('Выбери какие отчеты отобразить', reply_markup=find_note_kb())
 
 
-@find_note_router.message(F.text == '📋 Все отчеты')
+@find_note_router.message(F.text == '📄 Все отчеты')
 async def all_views_noti(message: Message, state: FSMContext):
     await state.clear()
     all_notes = await get_notes_by_user(user_id=message.from_user.id)
     if all_notes:
         await send_many_notes(all_notes, bot, message.from_user.id)
-        await message.answer(f'Все ваши {len(all_notes)} заметок отправлены!', reply_markup=main_note_kb())
+        await message.answer(f'Все ваши {len(all_notes)} отчетов отправлены!', reply_markup=main_note_kb())
     else:
-        await message.answer('У вас пока нет ни одной заметки!', reply_markup=main_note_kb())
+        await message.answer('У вас пока нет ни одного отчета!', reply_markup=main_note_kb())
 
 
-@find_note_router.message(F.text == '📅 По дате добавления')
-async def date_views_noti(message: Message, state: FSMContext):
+@find_note_router.message(F.text == '🔍 По предмету')
+async def subject_views_noti(message: Message, state: FSMContext):
     await state.clear()
-    all_notes = await get_notes_by_user(user_id=message.from_user.id)
-    if all_notes:
-        await message.answer('На какой день вам отобразить заметки?',
-                             reply_markup=generate_date_keyboard(all_notes))
+    global subject_id
+    subject_id = None
+    all_subjects = await get_subjects_by_user(user_id=message.from_user.id)
+    if all_subjects:
+        await state.set_state(FindNoteStates.show_notes)
+        await message.answer('По какому предмету отчет?', reply_markup=generate_subject_keyboard_withId(all_subjects))
+
     else:
-        await message.answer('У вас пока нет ни одной заметки!', reply_markup=main_note_kb())
+        await state.clear()
+        await message.answer('У вас пока нет предметов для отчетов, их необходимо сначала добавить', reply_markup=main_note_kb())
 
 
-@find_note_router.callback_query(F.data.startswith('date_note_'))
+@find_note_router.callback_query(FindNoteStates.show_notes, F.data.startswith('subject_'))
 async def find_note_to_date(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.clear()
-    date_add = call.data.replace('date_note_', '')
-    all_notes = await get_notes_by_user(user_id=call.from_user.id, date_add=date_add)
+    subject_id = int(call.data.replace('subject_', ''))
+    all_notes = await get_notes_by_user(user_id=call.from_user.id, subject_id=subject_id)
+    subject_name = await get_subject_name_by_id(subject_id)
     await send_many_notes(all_notes, bot, call.from_user.id)
-    await call.message.answer(f'Все ваши {len(all_notes)} заметок на {date_add} отправлены!',
+    await call.message.answer(f'Все ваши отчеты по предмету {subject_name} отправлены!',
                               reply_markup=main_note_kb())
+
+# TODO: УДАЛИТЬ
 
 
 @find_note_router.message(F.text == '📝 По типу контента')
@@ -75,8 +84,8 @@ async def find_note_to_content_type(call: CallbackQuery, state: FSMContext):
     await call.message.answer(f'Все ваши {len(all_notes)} с типом контента {content_type} отправлены!',
                               reply_markup=main_note_kb())
 
-
-@find_note_router.message(F.text == '🔍 Поиск по тексту')
+# TODO: удалить
+""" @find_note_router.message(F.text == '🔍 Поиск по тексту')
 async def text_views_noti(message: Message, state: FSMContext):
     await state.clear()
     all_notes = await get_notes_by_user(user_id=message.from_user.id)
@@ -85,7 +94,9 @@ async def text_views_noti(message: Message, state: FSMContext):
                              'содержимом заметки будет обнаружен поисковой запрос, то я отображу эти заметки')
         await state.set_state(FindNoteStates.text)
     else:
-        await message.answer('У вас пока нет ни одной заметки!', reply_markup=main_note_kb())
+        await message.answer('У вас пока нет ни одной заметки!', reply_markup=main_note_kb()) """
+
+# TODO удалить
 
 
 @find_note_router.message(F.text, FindNoteStates.text)

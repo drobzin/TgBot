@@ -11,14 +11,14 @@ class User(Base):
     username: Mapped[str] = mapped_column(String, nullable=True)
     full_name: Mapped[str] = mapped_column(String, nullable=True)
 
-    # Связи с заметками и напоминаниями
+    # Связи с отчетами и напоминаниями
     notes: Mapped[list["Note"]] = relationship(
         "Note", back_populates="user", cascade="all, delete-orphan")
     subjects: Mapped[list["Subject"]] = relationship(
         "Subject", back_populates="user", cascade="all, delete-orphan")
 
 
-# Модель для таблицы заметок
+# Модель для таблицы отчетов
 class Note(Base):
     __tablename__ = 'notes'
 
