@@ -45,4 +45,4 @@ async def dell_note_process(call: CallbackQuery, state: FSMContext):
 
 @upd_note_router.message(F.text)
 async def idk(message: Message, state: FSMContext):
-    await message.answer('че несешь?')
+    await message.answer('😯 Не понимаю, воспользуйтесь командами с клавиатуры ')
