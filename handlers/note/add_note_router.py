@@ -21,7 +21,7 @@ class AddNoteStates(StatesGroup):
 @add_note_router.message(F.text == '📝 Отчеты')
 async def start_note(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer('Выберите неопходимое действие!',
+    await message.answer('Выберите необходимое действие!',
                          reply_markup=main_note_kb())
 
 

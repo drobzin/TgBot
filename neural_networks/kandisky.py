@@ -29,7 +29,7 @@ class Text2ImageAPI:
             "width": width,
             "height": height,
             "generateParams": {
-                "query": f"{prompt}"
+                "query": f"Учебный предмет - {prompt}"
             }
         }
 
