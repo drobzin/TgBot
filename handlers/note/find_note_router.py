@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery
 from create_bot import bot
-from data_base.dao import get_notes_by_user, get_subjects_by_user, get_subject_name_by_id
+from data_base.dao import get_notes_by_user, get_subjects_by_user, get_subject_name_by_id, get_subject_by_id
 from keyboards.note_kb import main_note_kb, find_note_kb, generate_date_keyboard, generate_type_content_keyboard, generate_subject_keyboard_withId, generate_subject_keyboard_withName
 from utils.utils import send_many_notes
 from create_bot import logger
@@ -49,15 +49,18 @@ async def subject_views_noti(message: Message, state: FSMContext):
         await message.answer('У вас пока нет предметов для отчетов, их необходимо сначала добавить', reply_markup=main_note_kb())
 
 
+# TODO: Добавить вывод сообщения с картинкой предмета, сгенерированного нейронкой при выборе предмета
 @find_note_router.callback_query(FindNoteStates.show_notes, F.data.startswith('subject_'))
-async def find_note_to_date(call: CallbackQuery, state: FSMContext):
+async def find_note_to_subject(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.clear()
     subject_id = int(call.data.replace('subject_', ''))
     all_notes = await get_notes_by_user(user_id=call.from_user.id, subject_id=subject_id)
-    subject_name = await get_subject_name_by_id(subject_id)
+    # subject_name = await get_subject_name_by_id(subject_id)
+    subject = await get_subject_by_id(subject_id)
+    await call.message.answer_photo(photo=subject['file_id'], caption=f'Файлы по предмету \'{subject['full_name']}\'')
     await send_many_notes(all_notes, bot, call.from_user.id)
-    await call.message.answer(f'Все ваши отчеты по предмету {subject_name} отправлены!',
+    await call.message.answer(f'Все ваши отчеты по предмету {subject['full_name']} отправлены!',
                               reply_markup=main_note_kb())
 
 # TODO: УДАЛИТЬ

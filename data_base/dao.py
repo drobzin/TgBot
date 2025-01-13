@@ -53,7 +53,7 @@ async def add_note(session, user_id: int, subject_id: int, content_type: str,
 
 
 @connection
-async def add_subject(session, user_id: int, full_name: str) -> Optional[Subject]:
+async def add_subject(session, user_id: int, full_name: str, file_id: str) -> Optional[Subject]:
     try:
         user = await session.scalar(select(User).filter_by(id=user_id))
         if not user:
@@ -62,7 +62,8 @@ async def add_subject(session, user_id: int, full_name: str) -> Optional[Subject
 
         new_subject = Subject(
             user_id=user_id,
-            full_name=full_name
+            full_name=full_name,
+            file_id=file_id
         )
 
         session.add(new_subject)
@@ -106,6 +107,24 @@ async def delete_note_by_id(session, note_id: int) -> Optional[Note]:
         await session.commit()
         logger.info(f"Отчет с ID {note_id} успешно удален.")
         return note
+    except SQLAlchemyError as e:
+        logger.error(f"Ошибка при удалении отчета: {e}")
+        await session.rollback()
+        return None
+
+
+@connection
+async def delete_subject_by_id(session, subject_id: int) -> Optional[Note]:
+    try:
+        subject = await session.get(Subject, subject_id)
+        if not subject:
+            logger.error(f"предмет с ID {subject_id} не найден.")
+            return None
+
+        await session.delete(subject)
+        await session.commit()
+        logger.info(f"Предмет с ID {subject_id} успешно удален.")
+        return subject
     except SQLAlchemyError as e:
         logger.error(f"Ошибка при удалении отчета: {e}")
         await session.rollback()
@@ -187,6 +206,24 @@ async def get_subject_name_by_id(session, subject_id: int) -> List[Dict[str, Any
             return None
 
         return subject.full_name
+    except SQLAlchemyError as e:
+        logger.error(f"Ошибка при получении предмета: {e}")
+        return None
+
+
+@connection
+async def get_subject_by_id(session, subject_id: int) -> List[Dict[str, Any]]:
+    try:
+        subject = await session.get(Subject, subject_id)
+        if not subject:
+            logger.info(f"Предмет с ID {subject_id} не найден.")
+            return None
+
+        return {
+            'id': subject.id,
+            'full_name': subject.full_name,
+            'file_id': subject.file_id
+        }
     except SQLAlchemyError as e:
         logger.error(f"Ошибка при получении предмета: {e}")
         return None

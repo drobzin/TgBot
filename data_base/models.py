@@ -43,6 +43,7 @@ class Subject(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey('users.id'), nullable=False)
     full_name: Mapped[int] = mapped_column(String)
+    file_id: Mapped[str] = mapped_column(String, nullable=True)
     user: Mapped["User"] = relationship("User", back_populates="subjects")
     notes: Mapped[list["Note"]] = relationship(
         "Note", back_populates="subject", cascade="all, delete-orphan")

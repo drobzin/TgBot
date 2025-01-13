@@ -13,6 +13,7 @@ from handlers.start_router import start_router
 # Функция, которая настроит командное меню (дефолтное для всех пользователей)
 async def set_commands():
     commands = [BotCommand(command='start', description='Старт')]
+
     await bot.set_my_commands(commands, BotCommandScopeDefault())
 
 
